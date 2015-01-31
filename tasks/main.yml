@@ -6,13 +6,16 @@
   template: src=Dockerfile dest=/root/attic-dockerized/Dockerfile
 
 - name: build a Docker image for Attic
-  command: docker build -t gitinsky/attic:0.1.0 --rm /root/attic-dockerized
+  command: docker build -t gitinsky/attic:0.1.1 --rm /root/attic-dockerized
 
 - name: check if a container is started
   command: bash -c "docker ps | grep attic-{{ attic_instance_name  }}"
   ignore_errors: True
   register: result
 
+- name: put a key
+  template: src=authorized_keys dest=/root/{{ attic_instance_name }}-authorized_keys owner=root group=root mode=0600
+
 - name: start an Attic container
-  command: docker run -d -name attic-{{ attic_instance_name }} -v {{ ext_attic_volume }}:/repositories -p={{ attic_instance_port }}:22 gitinsky/attic:0.1.0
+  command: docker run -d -name attic-{{ attic_instance_name }} -v {{ ext_attic_volume }}:/repositories -v /root/{{ attic_instance_name }}-authorized_keys:/root/.ssh/authorized_keys -p={{ attic_instance_port }}:22 gitinsky/attic:0.1.1
   when: result|failed
