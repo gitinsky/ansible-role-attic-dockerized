@@ -1,0 +1,18 @@
+---
+- name: make a build dir
+  file: state=directory name=/root/attic-dockerized
+
+- name: put Dockerfile
+  template: src=Dockerfile dest=/root/attic-dockerized/Dockerfile
+
+- name: build a Docker image for Attic
+  command: docker build -t gitinsky/attic:0.1.0 --rm /root/attic-dockerized
+
+- name: check if a container is started
+  command: bash -c "docker ps | grep attic-{{ attic_instance_name  }}"
+  ignore_errors: True
+  register: result
+
+- name: start an Attic container
+  command: docker run -d -name attic-{{ attic_instance_name }} -v {{ ext_attic_volume }}:/repositories -p={{ attic_instance_port }}:22 gitinsky/attic:0.1.0
+  when: result|failed
